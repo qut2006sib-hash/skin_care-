@@ -1,0 +1,11 @@
+{
+  "name": "متجر العناية بالبشرة — حمص",
+  "short_name": "العناية بالبشرة",
+  "description": "تسوق منتجات العناية بالبشرة والشعر الأصلية في حمص مع الدفع عند الاستلام",
+  "start_url": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#FAF7F5",
+  "theme_color": "#1E4D40"
+}
