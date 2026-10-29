@@ -133,7 +133,10 @@ def test_preexisting_database_refused_without_pg_restore_or_new_directory(tmp_pa
     assert not (tmp_path / 'stage').exists()
 
 
-def test_env_parser_never_executes_shell(tmp_path):
+def test_env_parser_never_executes_shell(tmp_path, monkeypatch):
+    # CI correctly supplies credentials in the process environment. Isolate the
+    # file-parser test from those intentional, higher-precedence values.
+    monkeypatch.delenv('POSTGRES_PASSWORD', raising=False)
     marker = tmp_path / 'executed'
     (tmp_path / '.env').write_text(f'POSTGRES_PASSWORD=$(touch {marker})\nSTORE_NAME=ندى للعناية\n')
     env = recovery.load_environment(tmp_path)
