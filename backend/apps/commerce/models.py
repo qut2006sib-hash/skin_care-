@@ -30,15 +30,15 @@ class Product(models.Model):
     slug = models.SlugField(max_length=120, unique=True)
     name_ar = models.CharField(max_length=200)
     name_en = models.CharField(max_length=200)
-    description_ar = models.TextField()
-    ingredients_text = models.TextField(help_text="Original INCI ingredient script")
-    directions_ar = models.TextField()
-    warnings_ar = models.TextField()
+    description_ar = models.TextField(blank=True, default="")
+    ingredients_text = models.TextField(blank=True, default="", help_text="Original INCI ingredient script")
+    directions_ar = models.TextField(blank=True, default="")
+    warnings_ar = models.TextField(blank=True, default="")
     concern_tags = models.JSONField(default=list, help_text="Checked catalog tags e.g. ['ترطيب', 'بشرة حساسة']")
-    claim_evidence_source = models.TextField(help_text="Manufacturer label or supplier document reference")
-    claim_checked_date = models.DateField()
-    claim_reviewer = models.CharField(max_length=120)
-    is_published = models.BooleanField(default=True)
+    claim_evidence_source = models.TextField(blank=True, default="", help_text="Manufacturer label or supplier document reference")
+    claim_checked_date = models.DateField(null=True, blank=True)
+    claim_reviewer = models.CharField(max_length=120, blank=True, default="")
+    is_published = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.brand.name_en} - {self.name_ar}"
@@ -66,8 +66,8 @@ class ProductVariant(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(check=Q(price_syp__gt=0), name="variant_price_syp_gt_zero"),
-            models.CheckConstraint(check=Q(currency="SYP"), name="variant_currency_is_syp"),
+            models.CheckConstraint(condition=Q(price_syp__gt=0), name="variant_price_syp_gt_zero"),
+            models.CheckConstraint(condition=Q(currency="SYP"), name="variant_currency_is_syp"),
         ]
 
     def __str__(self) -> str:
@@ -103,10 +103,10 @@ class InventoryBatch(models.Model):
     class Meta:
         unique_together = [("variant", "lot_code")]
         constraints = [
-            models.CheckConstraint(check=Q(unit_cost_syp__gte=0), name="batch_unit_cost_non_negative"),
-            models.CheckConstraint(check=Q(qty_on_hand__gte=0), name="batch_qty_on_hand_non_negative"),
-            models.CheckConstraint(check=Q(qty_reserved__gte=0), name="batch_qty_reserved_non_negative"),
-            models.CheckConstraint(check=Q(qty_reserved__lte=F("qty_on_hand")), name="batch_reserved_lte_on_hand"),
+            models.CheckConstraint(condition=Q(unit_cost_syp__gte=0), name="batch_unit_cost_non_negative"),
+            models.CheckConstraint(condition=Q(qty_on_hand__gte=0), name="batch_qty_on_hand_non_negative"),
+            models.CheckConstraint(condition=Q(qty_reserved__gte=0), name="batch_qty_reserved_non_negative"),
+            models.CheckConstraint(condition=Q(qty_reserved__lte=F("qty_on_hand")), name="batch_reserved_lte_on_hand"),
         ]
 
     @property
@@ -137,9 +137,9 @@ class DeliveryZone(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(check=Q(city="Homs"), name="delivery_zone_city_homs_only"),
+            models.CheckConstraint(condition=Q(city="Homs"), name="delivery_zone_city_homs_only"),
             models.CheckConstraint(
-                check=Q(fee_syp__isnull=True) | Q(fee_syp__gte=0),
+                condition=Q(fee_syp__isnull=True) | Q(fee_syp__gte=0),
                 name="delivery_zone_fee_non_negative",
             ),
         ]
@@ -167,6 +167,7 @@ class Order(models.Model):
     order_number = models.CharField(max_length=32, unique=True)
     tracking_token = models.CharField(max_length=64, unique=True, default=generate_tracking_token)
     idempotency_key = models.CharField(max_length=128, unique=True)
+    request_fingerprint = models.CharField(max_length=64, blank=True, default="")
     status = models.CharField(
         max_length=32,
         choices=OrderStatus.choices,
@@ -200,10 +201,11 @@ class Order(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(check=Q(city="Homs"), name="order_city_homs_only"),
-            models.CheckConstraint(check=Q(currency="SYP"), name="order_currency_syp_only"),
+            models.CheckConstraint(condition=Q(subtotal_syp__gte=0) & Q(delivery_fee_syp__gte=0) & Q(discount_syp__gte=0) & Q(total_syp__gte=0), name="order_money_nonnegative"),
+            models.CheckConstraint(condition=Q(city="Homs"), name="order_city_homs_only"),
+            models.CheckConstraint(condition=Q(currency="SYP"), name="order_currency_syp_only"),
             models.CheckConstraint(
-                check=Q(total_syp=F("subtotal_syp") + F("delivery_fee_syp") - F("discount_syp")),
+                condition=Q(total_syp=F("subtotal_syp") + F("delivery_fee_syp") - F("discount_syp")),
                 name="order_total_syp_integrity",
             ),
         ]
@@ -220,6 +222,14 @@ class OrderLine(models.Model):
     line_total_syp_snapshot = models.BigIntegerField()
 
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(quantity__gt=0), name="order_line_quantity_positive"),
+            models.CheckConstraint(condition=Q(unit_price_syp_snapshot__gte=0), name="order_line_price_nonnegative"),
+            models.CheckConstraint(condition=Q(line_total_syp_snapshot=F("unit_price_syp_snapshot") * F("quantity")), name="order_line_total_integrity"),
+        ]
+
+
 class AllocationStatus(models.TextChoices):
     RESERVED = "RESERVED", "محجوز"
     CONSUMED = "CONSUMED", "تم الصرف عند الشحن"
@@ -232,6 +242,10 @@ class OrderBatchAllocation(models.Model):
     qty_allocated = models.PositiveIntegerField()
     unit_cost_syp_snapshot = models.BigIntegerField()
     status = models.CharField(max_length=20, choices=AllocationStatus.choices, default=AllocationStatus.RESERVED)
+
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(qty_allocated__gt=0), name="allocation_quantity_positive")]
 
 
 class CashCollectionStatus(models.TextChoices):
@@ -264,9 +278,18 @@ class CustomerCashCollection(models.Model):
     )
 
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(expected_amount_syp__gte=0), name="collection_expected_nonnegative"),
+            models.CheckConstraint(condition=Q(collected_amount_syp__gte=0), name="collection_collected_nonnegative"),
+            models.CheckConstraint(condition=Q(currency="SYP"), name="collection_currency_syp"),
+        ]
+
+
 class CourierRemittance(models.Model):
     """Tracks actual cash handed over by the courier to the merchant."""
     remittance_ref = models.CharField(max_length=64, unique=True)
+    request_fingerprint = models.CharField(max_length=64, blank=True, default="")
     courier_name = models.CharField(max_length=120)
     gross_collected_syp = models.BigIntegerField()
     courier_deductions_syp = models.BigIntegerField(default=0)
@@ -276,6 +299,14 @@ class CourierRemittance(models.Model):
     recorded_by = models.CharField(max_length=120)
 
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(gross_collected_syp__gte=0), name="remittance_gross_nonnegative"),
+            models.CheckConstraint(condition=Q(courier_deductions_syp__gte=0) & Q(courier_deductions_syp__lte=F("gross_collected_syp")), name="remittance_deductions_bounded"),
+            models.CheckConstraint(condition=Q(net_remitted_syp=F("gross_collected_syp")-F("courier_deductions_syp")), name="remittance_net_integrity"),
+        ]
+
+
 class ReturnInspectionStatus(models.TextChoices):
     QUARANTINED = "QUARANTINED", "في الحجر بانتظار الفحص"
     APPROVED_RESTOCK = "APPROVED_RESTOCK", "مقبول لإعادة البيع"
@@ -283,6 +314,10 @@ class ReturnInspectionStatus(models.TextChoices):
 
 
 class ReturnRecord(models.Model):
+    return_ref = models.CharField(max_length=128, unique=True, null=True, blank=True)
+    request_fingerprint = models.CharField(max_length=64, blank=True, default="")
+    quarantine_batch = models.ForeignKey(InventoryBatch, null=True, blank=True, on_delete=models.PROTECT, related_name="quarantine_returns")
+    inspected_at = models.DateTimeField(null=True, blank=True)
     order_line = models.ForeignKey(OrderLine, on_delete=models.PROTECT, related_name="returns")
     batch = models.ForeignKey(InventoryBatch, on_delete=models.PROTECT)
     qty_returned = models.PositiveIntegerField()
@@ -300,6 +335,34 @@ class ReturnRecord(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(qty_returned__gt=0), name="return_quantity_positive"),
+            models.CheckConstraint(condition=Q(refund_authorized_syp__gte=0), name="return_refund_authorized_nonnegative"),
+            models.CheckConstraint(condition=Q(refund_paid_syp__gte=0) & Q(refund_paid_syp__lte=F("refund_authorized_syp")), name="return_refund_paid_bounded"),
+        ]
+
+
+class StockReceipt(models.Model):
+    receipt_ref = models.CharField(max_length=128, unique=True)
+    request_fingerprint = models.CharField(max_length=64)
+    batch = models.ForeignKey(InventoryBatch, on_delete=models.PROTECT, related_name="receipts")
+    qty_received = models.PositiveIntegerField()
+    actor = models.CharField(max_length=120)
+    created_at = models.DateTimeField(default=timezone.now)
+
+
+class StockMovement(models.Model):
+    batch = models.ForeignKey(InventoryBatch, on_delete=models.PROTECT, related_name="movements")
+    order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.PROTECT, related_name="stock_movements")
+    action = models.CharField(max_length=40)
+    qty_on_hand_delta = models.IntegerField(default=0)
+    qty_reserved_delta = models.IntegerField(default=0)
+    actor = models.CharField(max_length=120)
+    reference = models.CharField(max_length=128, blank=True, default="")
+    created_at = models.DateTimeField(default=timezone.now)
+
+
 class AuditLog(models.Model):
     actor = models.CharField(max_length=120)
     action = models.CharField(max_length=120)
@@ -308,3 +371,16 @@ class AuditLog(models.Model):
     reason = models.TextField(blank=True, default="")
     payload_json = models.JSONField(default=dict)
     created_at = models.DateTimeField(default=timezone.now)
+
+
+class RefundPayment(models.Model):
+    payment_ref = models.CharField(max_length=128, unique=True)
+    request_fingerprint = models.CharField(max_length=64)
+    return_record = models.ForeignKey(ReturnRecord, on_delete=models.PROTECT, related_name="refund_payments")
+    amount_syp = models.BigIntegerField()
+    refund_method = models.CharField(max_length=64)
+    actor = models.CharField(max_length=120)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(amount_syp__gt=0), name="refund_payment_positive")]

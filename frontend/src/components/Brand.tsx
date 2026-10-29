@@ -1,0 +1,4 @@
+import Link from "next/link";
+export function Leaf() { return <svg width="28" height="34" viewBox="0 0 28 34" fill="none" aria-hidden="true"><path d="M23 3C23 20 21 27 8 28C3 20 6 8 23 3Z" fill="currentColor" opacity=".14"/><path d="M23 3C23 20 21 27 8 28C3 20 6 8 23 3ZM7 32C9 23 13 17 19 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg> }
+export default function Brand() { return <Link href="/" className="brand" aria-label="متجر العناية، الرئيسية"><Leaf/><span>العناية<small>متجرك في حمص</small></span></Link>; }
+export function BagIcon() { return <svg viewBox="0 0 24 24" width="21" height="21" fill="none" aria-hidden="true"><path d="M5 7H19L20 21H4L5 7Z" stroke="currentColor" strokeWidth="1.6"/><path d="M8 8V6A4 4 0 0 1 16 6V8" stroke="currentColor" strokeWidth="1.6"/></svg>; }

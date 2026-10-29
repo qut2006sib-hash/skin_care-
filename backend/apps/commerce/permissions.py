@@ -1,23 +1,23 @@
 from rest_framework.permissions import BasePermission
 
+ROLES = ('Owner', 'Catalog_Inventory_Manager', 'Fulfillment_Support_Staff')
 
-class IsCatalogOrOwnerStaff(BasePermission):
-    """Server-enforced permission for catalog and batch receiving actions."""
-    def has_permission(self, request, view) -> bool:
-        user = request.user
-        if not (user and user.is_authenticated and user.is_staff):
-            return False
-        if user.is_superuser:
-            return True
-        return user.groups.filter(name__in=["Owner", "Catalog_Inventory_Manager"]).exists()
+def has_role(user, roles=ROLES):
+    return bool(user and user.is_authenticated and user.is_active and user.is_staff and (user.is_superuser or user.groups.filter(name__in=roles).exists()))
 
+class IsCommerceStaff(BasePermission):
+    message = 'هذه العملية متاحة لموظفي المتجر المصرّح لهم فقط.'
+    def has_permission(self, request, view):
+        return has_role(request.user)
 
-class IsFulfillmentOrOwnerStaff(BasePermission):
-    """Server-enforced permission for order confirmation, dispatch, and cash reconciliation."""
-    def has_permission(self, request, view) -> bool:
-        user = request.user
-        if not (user and user.is_authenticated and user.is_staff):
-            return False
-        if user.is_superuser:
-            return True
-        return user.groups.filter(name__in=["Owner", "Fulfillment_Support_Staff"]).exists()
+class IsOwnerStaff(IsCommerceStaff):
+    def has_permission(self, request, view):
+        return has_role(request.user, ('Owner',))
+
+class IsCatalogOrOwnerStaff(IsCommerceStaff):
+    def has_permission(self, request, view):
+        return has_role(request.user, ('Owner', 'Catalog_Inventory_Manager'))
+
+class IsFulfillmentOrOwnerStaff(IsCommerceStaff):
+    def has_permission(self, request, view):
+        return has_role(request.user, ('Owner', 'Fulfillment_Support_Staff'))

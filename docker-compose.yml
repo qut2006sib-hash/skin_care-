@@ -1,44 +1,74 @@
+x-backend: &backend
+  build:
+    context: ./backend
+  env_file: .env
+  environment:
+    POSTGRES_HOST: db
+  restart: unless-stopped
+
 services:
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-skin_care}
       POSTGRES_USER: ${POSTGRES_USER:-skin_care_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skin_care_pass}
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/local_setup.sh to create .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-skin_care_user} -d ${POSTGRES_DB:-skin_care}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
       timeout: 5s
-      retries: 5
+      retries: 20
+    restart: unless-stopped
 
   backend:
-    build:
-      context: ./backend
-    env_file:
-      - .env.example
+    <<: *backend
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py seed_section15 &&
-             python manage.py runserver 0.0.0.0:8000"
-    ports:
-      - "8000:8000"
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py init_roles &&
+             python manage.py runserver 0.0.0.0:8000 --noreload"
+    volumes:
+      - media:/app/media
     depends_on:
       db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/', timeout=4)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  worker:
+    <<: *backend
+    command: python manage.py expire_overdue_holds --loop --interval 60
+    depends_on:
+      backend:
         condition: service_healthy
 
   frontend:
     build:
       context: ./frontend
-    ports:
-      - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+      API_PROXY_TARGET: http://backend:8000
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tests:
+    <<: *backend
+    profiles: ["test"]
+    restart: "no"
+    command: python -m pytest -q -W ignore::DeprecationWarning
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:
+  media:

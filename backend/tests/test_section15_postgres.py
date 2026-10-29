@@ -23,7 +23,7 @@ from apps.commerce.exceptions import (
 
 @pytest.fixture
 def seeded_db(db):
-    call_command("seed_section15")
+    call_command("seed_section15", demo=True)
     zone = DeliveryZone.objects.get(code="homs-al-waer")
     zone.fee_syp = 15000
     zone.is_active = True
