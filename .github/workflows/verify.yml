@@ -52,3 +52,64 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -r backend/requirements.txt playwright==1.64.1
+      - run: python -m playwright install --with-deps chromium
+      - run: npm ci
+        working-directory: frontend
+      - run: python -u tests/run_browser_checks.py
+  docker-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/local_setup.sh
+      - run: docker compose exec -T backend python manage.py seed_section15 --demo
+      - name: Verify proxied health and catalog
+        run: |
+          python3 - <<'PY'
+          import json,time,urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen('http://localhost:3000/api/v1/health/',timeout=4) as r:
+                      assert json.load(r)['status']=='ok'
+                  break
+              except Exception:
+                  if attempt==29: raise
+                  time.sleep(1)
+          with urllib.request.urlopen('http://localhost:3000/api/v1/catalog/products/') as r:
+              data=json.load(r)
+          assert len(data['products'])==10 and data['demo_mode'] is True
+          PY
+      - run: docker compose restart backend worker
+      - name: Verify restart retained catalog and disabled zones
+        run: |
+          python3 - <<'PY'
+          import json,time,urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen('http://localhost:3000/api/v1/catalog/products/',timeout=4) as r:
+                      assert len(json.load(r)['products'])==10
+                  break
+              except Exception:
+                  if attempt==29: raise
+                  time.sleep(1)
+          with urllib.request.urlopen('http://localhost:3000/api/v1/delivery-zones/') as r:
+              assert json.load(r)==[]
+          PY
+      - if: failure()
+        run: docker compose logs --tail=150
+      - if: always()
+        run: docker compose down

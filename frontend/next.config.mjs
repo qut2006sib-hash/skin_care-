@@ -2,6 +2,7 @@ const backend = (process.env.API_PROXY_TARGET || "http://backend:8000").replace(
 /** @type {import('next').NextConfig} */
 const config = {
   poweredByHeader: false,
+  allowedDevOrigins: ["127.0.0.1", ...(process.env.NEXT_DEV_ALLOWED_HOSTS || "").split(",").map(host => host.trim()).filter(Boolean)],
   skipTrailingSlashRedirect: true,
   async rewrites() {
     return [

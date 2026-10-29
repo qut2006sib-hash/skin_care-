@@ -1,6 +1,6 @@
 # Source import provenance
 
-The original archive's Git history is preserved in the delivered history bundle. Direct GitHub SSH networking was unavailable in this execution environment, so the connected GitHub API imported the five original branch snapshots in order. Each remote snapshot tree was checked equal to its original Git tree. API-created commit identities/dates differ; remote commit IDs therefore differ from archive commit IDs. No branch was force-pushed. Use a fresh clone of the remote for future development; do not push the old archive branches over the remote.
+The original archive's Git history is preserved in the original uploaded archive. Direct GitHub SSH networking was unavailable in this execution environment, so the connected GitHub API imported the five original branch snapshots in order. Each remote snapshot tree was checked equal to its original Git tree. API-created commit identities/dates differ; remote commit IDs therefore differ from archive commit IDs. No branch was force-pushed. Use a fresh clone of the remote for future development; do not push the old archive branches over the remote.
 
 | Branch | Archive commit | Remote import commit |
 |---|---|---|
