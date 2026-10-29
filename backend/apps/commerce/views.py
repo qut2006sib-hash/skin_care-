@@ -18,6 +18,7 @@ from .serializers import (PublicProductSerializer, PublicDeliveryZoneSerializer,
 from .services import InventoryOrderService
 from .permissions import IsCommerceStaff, IsOwnerStaff, IsCatalogOrOwnerStaff, IsFulfillmentOrOwnerStaff, has_role
 from .exceptions import CommerceDomainError
+from .supplier_catalog import public_supplier_listings
 
 
 def command_errors(fn):
@@ -108,10 +109,11 @@ def catalog_products_view(request):
             qs = qs.filter(**{lookup:request.query_params[param]})
     if request.query_params.get('q'):
         q = request.query_params['q'][:200]
-        qs = qs.filter(Q(name_ar__icontains=q)|Q(name_en__icontains=q))
-    data = PublicProductSerializer(qs.order_by('id'), many=True).data
+        qs = qs.filter(Q(name_ar__icontains=q)|Q(name_en__icontains=q)|Q(variants__sku__icontains=q)).distinct()
+    data = list(PublicProductSerializer(qs.order_by('id'), many=True).data)
     if request.query_params.get('concern'):
         data = [p for p in data if request.query_params['concern'] in p.get('concern_tags',[])]
+    data.extend(public_supplier_listings(request.query_params))
     return Response({'currency':'SYP','city':'Homs','demo_mode':getattr(settings,'DEMO_MODE',True),'products':data})
 
 

@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group, Permission
 from django.db import transaction
 
 ROLE_NAMES = ("Owner", "Catalog_Inventory_Manager", "Fulfillment_Support_Staff")
-CATALOG_MODELS = {"brand", "category", "product", "productvariant"}
+CATALOG_MODELS = {"brand", "category", "product", "productvariant", "suppliercatalogitem"}
 OPERATIONAL_MODELS = {"inventorybatch", "order", "orderline", "orderbatchallocation", "customercashcollection", "courierremittance", "returnrecord", "auditlog", "stockmovement"}
 
 

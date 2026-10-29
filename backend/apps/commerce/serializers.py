@@ -123,14 +123,19 @@ class LoginSerializer(CommandSerializer):
 
 class PublicVariantSerializer(serializers.ModelSerializer):
     available_quantity = serializers.SerializerMethodField()
+    orderable = serializers.SerializerMethodField()
     class Meta:
         model = ProductVariant
-        fields = ['sku', 'pack_size_label_ar', 'volume_ml', 'weight_g', 'price_syp', 'currency', 'pao_months', 'image_url', 'available_quantity']
+        fields = ['sku', 'pack_size_label_ar', 'volume_ml', 'weight_g', 'price_syp', 'currency', 'pao_months', 'image_url', 'available_quantity', 'orderable']
     def get_available_quantity(self, obj):
         return InventoryOrderService.get_available_quantity(obj.sku)
+    def get_orderable(self, obj):
+        return bool(obj.is_active and obj.product.is_published and self.get_available_quantity(obj) > 0)
 
 
 class PublicProductSerializer(serializers.ModelSerializer):
+    catalog_origin = serializers.SerializerMethodField()
+    brand_slug = serializers.CharField(source='brand.slug', read_only=True)
     brand_name_en = serializers.CharField(source='brand.name_en', read_only=True)
     brand_name_ar = serializers.CharField(source='brand.name_ar', read_only=True)
     category_slug = serializers.CharField(source='category.slug', read_only=True)
@@ -138,7 +143,9 @@ class PublicProductSerializer(serializers.ModelSerializer):
     variants = serializers.SerializerMethodField()
     class Meta:
         model = Product
-        fields = ['slug', 'name_ar', 'name_en', 'brand_name_en', 'brand_name_ar', 'category_slug', 'category_name_ar', 'description_ar', 'ingredients_text', 'directions_ar', 'warnings_ar', 'concern_tags', 'variants']
+        fields = ['slug', 'name_ar', 'name_en', 'brand_name_en', 'brand_name_ar', 'category_slug', 'category_name_ar', 'description_ar', 'ingredients_text', 'directions_ar', 'warnings_ar', 'concern_tags', 'variants', 'catalog_origin', 'brand_slug']
+    def get_catalog_origin(self, obj):
+        return 'local'
     def get_variants(self, obj):
         return PublicVariantSerializer([v for v in obj.variants.all() if v.is_active], many=True).data
 

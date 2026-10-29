@@ -1,0 +1,117 @@
+{
+  "source": {
+    "repository": "qut2006sib-hash/pharmacy-distribution",
+    "commit": "d1384b01e6ac20e05255111783218f3e9b7e76e6",
+    "path": "pharmacy_distribution/field_data.py"
+  },
+  "products": [
+    {
+      "sku": "MEDEE-VIT-C",
+      "name": "MEDEE SERUM (Vit C)",
+      "brand": "MEDEE",
+      "price_usd": "29.40"
+    },
+    {
+      "sku": "MEDEE-EXTRA-C",
+      "name": "MEDEE SERUM (EXTRA C)",
+      "brand": "MEDEE",
+      "price_usd": "30.75"
+    },
+    {
+      "sku": "MEDEE-HYDRA",
+      "name": "MEDEE HYDRA",
+      "brand": "MEDEE",
+      "price_usd": "10.40"
+    },
+    {
+      "sku": "MEDEE-HA",
+      "name": "MEDEE HA",
+      "brand": "MEDEE",
+      "price_usd": "24.55"
+    },
+    {
+      "sku": "MEDEE-RETINOL",
+      "name": "MEDEE RETINOL",
+      "brand": "MEDEE",
+      "price_usd": "24.55"
+    },
+    {
+      "sku": "MEDEE-ROLLER-025",
+      "name": "MEDEE DERMA ROLLER 0.25",
+      "brand": "MEDEE",
+      "price_usd": "23.50"
+    },
+    {
+      "sku": "MEDEE-ROLLER-05",
+      "name": "MEDEE DERMA ROLLER 0.5",
+      "brand": "MEDEE",
+      "price_usd": "23.50"
+    },
+    {
+      "sku": "JUVE-AQUAFLUID-SPF50",
+      "name": "JUVE LAB AQUAFLUID +SPF50",
+      "brand": "JUVE LAB",
+      "price_usd": "15.60"
+    },
+    {
+      "sku": "JUVE-SPF50-WHITENIZER",
+      "name": "JUVE LAB SPF50 + WHITENIZER",
+      "brand": "JUVE LAB",
+      "price_usd": "19.00"
+    },
+    {
+      "sku": "JUVE-TKN-CREAM",
+      "name": "JUVE LAB TKN CREAM",
+      "brand": "JUVE LAB",
+      "price_usd": "24.60"
+    },
+    {
+      "sku": "JUVE-CLEANSER-OILY",
+      "name": "JUVE LAB CLEANSER OILY COMBINED SKIN",
+      "brand": "JUVE LAB",
+      "price_usd": "9.85"
+    },
+    {
+      "sku": "JUVE-CLEANSER-DRY",
+      "name": "JUVE LAB CLEANSER DRY COMBINED SKIN",
+      "brand": "JUVE LAB",
+      "price_usd": "9.85"
+    },
+    {
+      "sku": "JUVE-CLEANSER-SOFT",
+      "name": "JUVE LAB CLEANSER SOFT COMBINED SKIN",
+      "brand": "JUVE LAB",
+      "price_usd": "9.85"
+    },
+    {
+      "sku": "JUVE-DEODORANT",
+      "name": "JUVE LAB DEODARANT",
+      "brand": "JUVE LAB",
+      "price_usd": "9.85"
+    },
+    {
+      "sku": "JUVE-DEODORANT-ANTI",
+      "name": "JUVE LAB DEODARANT ANTIPRESPIRANT",
+      "brand": "JUVE LAB",
+      "price_usd": "9.85"
+    },
+    {
+      "sku": "FEME-CAPSULES-60",
+      "name": "FEME HAIR CAPSULES 60",
+      "brand": "FEME HAIR",
+      "price_usd": "35.80"
+    },
+    {
+      "sku": "FEME-SHAMPOO",
+      "name": "FEME HAIR SHAMPOO",
+      "brand": "FEME HAIR",
+      "price_usd": "13.20"
+    },
+    {
+      "sku": "FEME-ROSEMARY-OIL",
+      "name": "FEME HAIR ROSEMARY OIL",
+      "brand": "FEME HAIR",
+      "price_usd": "18.30"
+    }
+  ]
+}

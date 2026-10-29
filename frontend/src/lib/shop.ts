@@ -1,11 +1,12 @@
 export interface Variant {
-  sku: string; pack_size_label_ar: string; price_syp: number; currency: string;
+  sku: string; pack_size_label_ar: string; price_syp: number | null; currency: string;
+  orderable?: boolean; reference_price?: { amount: string; currency: string } | null;
   pao_months: number | null; available_quantity: number; image_url?: string;
 }
 export interface Product {
   slug: string; name_ar: string; name_en: string; brand_name_en: string; brand_name_ar: string;
   category_slug: string; category_name_ar: string; description_ar: string; ingredients_text: string;
-  directions_ar: string; warnings_ar: string; concern_tags: string[]; variants: Variant[];
+  directions_ar: string; warnings_ar: string; concern_tags: string[]; variants: Variant[]; catalog_origin?: string;
 }
 export interface DeliveryZone { code: string; city: string; district_name_ar: string; fee_syp: number; estimated_hours: number }
 export interface Cart { [sku: string]: number }
@@ -20,6 +21,15 @@ export const CART_KEY = "homs_skincare_cart_v2";
 export const ATTEMPT_KEY = "homs_skincare_attempt_v1";
 export const ORDERS_KEY = "homs_skincare_orders_v1";
 export function money(value: number) { return new Intl.NumberFormat("ar-SY", {maximumFractionDigits:0}).format(value) + " ل.س"; }
+export function hasLocalSellingPrice(variant: Variant): boolean { return typeof variant.price_syp === "number" && Number.isSafeInteger(variant.price_syp) && variant.price_syp > 0 && variant.currency === "SYP"; }
+export function isOrderableVariant(variant: Variant): boolean { return variant.orderable !== false && hasLocalSellingPrice(variant); }
+export function isReferenceProduct(product: Product): boolean { return product.catalog_origin === "pharmacy-distribution"; }
+export function referenceMoney(price: { amount: string; currency: string }): string | null {
+  if(typeof price.amount!=="string"||!price.amount.trim())return null;
+  const amount=Number(price.amount);
+  if(price.currency !== "USD" || !Number.isFinite(amount) || amount < 0) return null;
+  return `${amount.toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})} USD`;
+}
 export function localDate(value: string) { return new Intl.DateTimeFormat("ar-SY", {dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Damascus"}).format(new Date(value)); }
 export function readStorage<T>(key: string, fallback: T): T {
   try { const value=localStorage.getItem(key); return value ? JSON.parse(value) as T : fallback; } catch { return fallback; }
