@@ -1,17 +1,11 @@
-import React from "react";
-
-export const metadata = {
-  title: "متجر العناية بالبشرة — حمص | تسوق الأصلي مع الدفع عند الاستلام",
-  description: "متجر متخصص بمنتجات MEDEE و JUVELAB و FEME Hair في مدينة حمص",
-  manifest: "/manifest.json",
+import type {Metadata,Viewport} from "next";
+import Shell from "@/components/Shell";
+import "./globals.css";
+export const metadata: Metadata = {
+ title: {default:"العناية | متجر حمص",template:"%s | العناية"},
+ description:"منتجات العناية بالبشرة والشعر، مع سلة واضحة وتتبع الطلب والتوصيل ضمن الأحياء المفعلة في حمص.",
+ manifest:"/manifest.json",
+ appleWebApp:{capable:true,statusBarStyle:"default",title:"العناية"},
 };
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ar" dir="rtl">
-      <body style={{ margin: 0, fontFamily: "'Noto Sans Arabic', system-ui, sans-serif", backgroundColor: "#FAF7F5", color: "#1C2526" }}>
-        {children}
-      </body>
-    </html>
-  );
-}
+export const viewport:Viewport={width:"device-width",initialScale:1,themeColor:"#654b7a"};
+export default function RootLayout({children}:{children:React.ReactNode}) { return <html lang="ar" dir="rtl"><body><Shell/>{children}</body></html>; }

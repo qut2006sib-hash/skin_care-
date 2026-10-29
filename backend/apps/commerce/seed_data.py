@@ -1,312 +1,87 @@
+"""Synthetic fixtures for disposable demonstrations, never supplier/label evidence.
+
+SKUs retain the original acceptance identifiers. Names, prices, ingredients,
+stock, invoices and validity dates are illustrative and must not be published
+as verified brand data. Date offsets are applied only on initial insertion.
 """
-Representative Section 15 seed catalog:
-- 10 SKUs across MEDEE, JUVELAB, and FEME Hair
-- SKU #1 (MEDEE-HYDRA-B5-30ML) has TWO eligible lots (FEFO test)
-- SKU #6 (JUVELAB-RETINOL-NIGHT-30ML) is unavailable (0 saleable stock)
-- SKU #10 (FEME-BIOTIN-MASK-250ML) is held in QUARANTINE for validity review (PAO 12M present, unopened expiry date missing)
-- Homs city delivery zones seeded as unconfigured (fee_syp=None, is_active=False) so no delivery prices are invented.
-"""
-from datetime import date
+from datetime import timedelta
+from django.utils import timezone
 
 BRANDS = [
-    {"slug": "medee", "name_en": "MEDEE", "name_ar": "ميدي (MEDEE)"},
-    {"slug": "juvelab", "name_en": "JUVELAB", "name_ar": "جوفيلاب (JUVELAB)"},
-    {"slug": "feme-hair", "name_en": "FEME Hair", "name_ar": "فيمي هير (FEME Hair)"},
+    {"slug": "medee", "name_en": "MEDEE", "name_ar": "ميدي"},
+    {"slug": "juvelab", "name_en": "JUVELAB", "name_ar": "جوفيلاب"},
+    {"slug": "feme-hair", "name_en": "FEME Hair", "name_ar": "فيمي هير"},
 ]
-
 CATEGORIES = [
-    {"slug": "serums", "name_ar": "سيرومات العناية بالبشرة", "name_en": "Face Serums"},
-    {"slug": "cleansers", "name_ar": "غسولات ومنظفات الوجه", "name_en": "Cleansers"},
-    {"slug": "moisturizers", "name_ar": "كريمات الترطيب والوقاية", "name_en": "Moisturizers & Sunscreens"},
-    {"slug": "hair-care", "name_ar": "العناية بالشعر وفروة الرأس", "name_en": "Hair Care"},
+    {"slug": "serums", "name_ar": "سيرومات", "name_en": "Serums"},
+    {"slug": "cleansers", "name_ar": "غسولات", "name_en": "Cleansers"},
+    {"slug": "moisturizers", "name_ar": "كريمات", "name_en": "Creams"},
+    {"slug": "hair-care", "name_ar": "العناية بالشعر", "name_en": "Hair care"},
+]
+# sku, brand, category, neutral Arabic name, size, price, cost, physical qty, lot
+_DEMO_ROWS = [
+    ("MEDEE-HYDRA-B5-30ML", "medee", "serums", "سيروم تجريبي", "30 مل", 145000, 88000, 6, "MED-B5-2601"),
+    ("MEDEE-HYDRA-B5-50ML", "medee", "serums", "سيروم تجريبي — عبوة كبيرة", "50 مل", 215000, 135000, 8, "MED-B550-2605"),
+    ("MEDEE-GENTLE-GEL-200ML", "medee", "cleansers", "غسول تجريبي", "200 مل", 110000, 68000, 12, "MED-CLN-2603"),
+    ("MEDEE-NIACINAMIDE-10-30ML", "medee", "serums", "سيروم عناية تجريبي", "30 مل", 135000, 82000, 9, "MED-NIA-2604"),
+    ("JUVELAB-CICA-BARRIER-50ML", "juvelab", "moisturizers", "كريم تجريبي", "50 مل", 160000, 98000, 7, "JUV-CICA-2602"),
+    ("JUVELAB-RETINOL-NIGHT-30ML", "juvelab", "moisturizers", "كريم تجريبي غير متوفر", "30 مل", 185000, 110000, 0, None),
+    ("JUVELAB-UV-FLUID-SPF50-50ML", "juvelab", "moisturizers", "كريم نهاري تجريبي", "50 مل", 155000, 94000, 15, "JUV-SPF-2606"),
+    ("FEME-SULFATEFREE-SHAMPOO-400ML", "feme-hair", "hair-care", "شامبو تجريبي", "400 مل", 125000, 75000, 14, "FEM-SHM-2602"),
+    ("FEME-ROSEMARY-TONIC-100ML", "feme-hair", "hair-care", "مستحضر شعر تجريبي", "100 مل", 140000, 84000, 5, "FEM-TON-2607"),
+    ("FEME-BIOTIN-MASK-250ML", "feme-hair", "hair-care", "ماسك تجريبي قيد فحص الصلاحية", "250 غ", 150000, 90000, 10, "FEM-MSK-2609-HOLD"),
 ]
 
-SKUS = [
-    {
-        "sku": "MEDEE-HYDRA-B5-30ML",
-        "brand": "medee",
-        "category": "serums",
-        "name_ar": "سيروم حمض الهيالورونيك وفيتامين B5 المرطب",
-        "name_en": "MEDEE Hydra B5 Hyaluronic Serum",
-        "pack_size_label_ar": "30 مل",
-        "volume_ml": 30,
-        "price_syp": 145000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 60,
-        "concern_tags": ["ترطيب", "بشرة جافة", "بشرة حساسة"],
-        "ingredients_text": "Aqua, Sodium Hyaluronate, Panthenol (Vitamin B5), Glycerin, Madecassoside",
-        "directions_ar": "يوضع 3-4 قطرات على بشرة نظيفة ورطبة صباحاً ومساءً.",
-        "warnings_ar": "للاستعمال الخارجي فقط. يحفظ بعيداً عن الحرارة وأشعة الشمس المباشرة.",
-        "claim_evidence_source": "ملصق العبوة الأصلي من المورد — دفعة استيراد تشرين الأول 2026",
-        "batches": [
-            {
-                "lot_code": "MED-B5-2601",
-                "supplier_invoice_ref": "INV-HOMS-2026-101",
-                "unit_cost_syp": 88000,
-                "expiry_date": date(2027, 4, 30),
-                "condition": "SALEABLE",
-                "qty_on_hand": 6,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع على قاعدة العبوة 04/2027",
-            },
-            {
-                "lot_code": "MED-B5-2608",
-                "supplier_invoice_ref": "INV-HOMS-2026-114",
-                "unit_cost_syp": 92000,
-                "expiry_date": date(2027, 11, 30),
-                "condition": "SALEABLE",
-                "qty_on_hand": 10,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع على قاعدة العبوة 11/2027",
-            },
-        ],
-    },
-    {
-        "sku": "MEDEE-HYDRA-B5-50ML",
-        "brand": "medee",
-        "category": "serums",
-        "name_ar": "سيروم حمض الهيالورونيك وفيتامين B5 المرطب — عبوة توفيرية",
-        "name_en": "MEDEE Hydra B5 Hyaluronic Serum Economy",
-        "pack_size_label_ar": "50 مل",
-        "volume_ml": 50,
-        "price_syp": 215000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 60,
-        "concern_tags": ["ترطيب", "بشرة جافة"],
-        "ingredients_text": "Aqua, Sodium Hyaluronate, Panthenol (Vitamin B5), Glycerin, Madecassoside",
-        "directions_ar": "يوضع 3-4 قطرات على بشرة نظيفة صباحاً ومساءً.",
-        "warnings_ar": "للاستعمال الخارجي فقط.",
-        "claim_evidence_source": "ملصق العبوة الأصلي 50 مل — مراجعة تشرين الأول 2026",
-        "batches": [
-            {
-                "lot_code": "MED-B550-2605",
-                "supplier_invoice_ref": "INV-HOMS-2026-114",
-                "unit_cost_syp": 135000,
-                "expiry_date": date(2027, 9, 30),
-                "condition": "SALEABLE",
-                "qty_on_hand": 8,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع 09/2027",
-            }
-        ],
-    },
-    {
-        "sku": "MEDEE-GENTLE-GEL-200ML",
-        "brand": "medee",
-        "category": "cleansers",
-        "name_ar": "غسول جل لطيف للبشرة الحساسة خالٍ من العطور",
-        "name_en": "MEDEE Gentle Micellar Cleansing Gel",
-        "pack_size_label_ar": "200 مل",
-        "volume_ml": 200,
-        "price_syp": 110000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 60,
-        "concern_tags": ["تنظيف لطيف", "بشرة حساسة", "خالٍ من العطور"],
-        "ingredients_text": "Aqua, Coco-Betaine, Glycerin, Niacinamide, Ceramide NP",
-        "directions_ar": "يدلك بلطف على الوجه المبلل ثم يشطف بالماء الفاتر.",
-        "warnings_ar": "تجنب ملامسة العينين.",
-        "claim_evidence_source": "بيان المكونات المطبوع على العبوة (Fragrance-Free verified)",
-        "batches": [
-            {
-                "lot_code": "MED-CLN-2603",
-                "supplier_invoice_ref": "INV-HOMS-2026-102",
-                "unit_cost_syp": 68000,
-                "expiry_date": date(2027, 8, 31),
-                "condition": "SALEABLE",
-                "qty_on_hand": 12,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع 08/2027",
-            }
-        ],
-    },
-    {
-        "sku": "MEDEE-NIACINAMIDE-10-30ML",
-        "brand": "medee",
-        "category": "serums",
-        "name_ar": "سيروم نياسيناميد 10% وزنك 1% لتنظيم الإفرازات الدهنية",
-        "name_en": "MEDEE Niacinamide 10% + Zinc 1% Serum",
-        "pack_size_label_ar": "30 مل",
-        "volume_ml": 30,
-        "price_syp": 135000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 60,
-        "concern_tags": ["بشرة دهنية", "مسام واسعة"],
-        "ingredients_text": "Aqua, Niacinamide, Pentylene Glycol, Zinc PCA, Tamarindus Indica Seed Gum",
-        "directions_ar": "يطبق على كامل الوجه صباحاً أو مساءً قبل الكريم المرطب.",
-        "warnings_ar": "في حال حدوث تهيج يوقف الاستخدام.",
-        "claim_evidence_source": "ملصق الشركة المصنعة — تشرين الأول 2026",
-        "batches": [
-            {
-                "lot_code": "MED-NIA-2604",
-                "supplier_invoice_ref": "INV-HOMS-2026-103",
-                "unit_cost_syp": 82000,
-                "expiry_date": date(2027, 7, 31),
-                "condition": "SALEABLE",
-                "qty_on_hand": 9,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع 07/2027",
-            }
-        ],
-    },
-    {
-        "sku": "JUVELAB-CICA-BARRIER-50ML",
-        "brand": "juvelab",
-        "category": "moisturizers",
-        "name_ar": "كريم سيكا لإصلاح حاجز البشرة وتهدئة الاحمرار",
-        "name_en": "JUVELAB Cica Barrier Repair Cream",
-        "pack_size_label_ar": "50 مل",
-        "volume_ml": 50,
-        "price_syp": 160000,
-        "pao_months": 6,
-        "min_remaining_validity_days": 90,
-        "concern_tags": ["ترطيب", "إصلاح الحاجز", "بشرة حساسة"],
-        "ingredients_text": "Aqua, Centella Asiatica Extract, Panthenol, Butyrospermum Parkii Butter, Copper-Zinc Gluconate",
-        "directions_ar": "يوضع مرتين يومياً على المناطق الجافة أو المتهيجة.",
-        "warnings_ar": "لا يوضع على الجروح المفتوحة.",
-        "claim_evidence_source": "نشرة منتج JUVELAB الرسمية — تشرين الأول 2026",
-        "batches": [
-            {
-                "lot_code": "JUV-CICA-2602",
-                "supplier_invoice_ref": "INV-HOMS-2026-105",
-                "unit_cost_syp": 98000,
-                "expiry_date": date(2027, 6, 30),
-                "condition": "SALEABLE",
-                "qty_on_hand": 7,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع 06/2027",
-            }
-        ],
-    },
-    {
-        "sku": "JUVELAB-RETINOL-NIGHT-30ML",
-        "brand": "juvelab",
-        "category": "moisturizers",
-        "name_ar": "كريم ليلي بالريتينول 0.3% (غير متوفر حالياً)",
-        "name_en": "JUVELAB Retinol 0.3% Night Renewal Cream",
-        "pack_size_label_ar": "30 مل",
-        "volume_ml": 30,
-        "price_syp": 185000,
-        "pao_months": 6,
-        "min_remaining_validity_days": 90,
-        "concern_tags": ["عناية ليلية"],
-        "ingredients_text": "Aqua, Caprylic/Capric Triglyceride, Retinol, Tocopherol, Ceramide EOP",
-        "directions_ar": "يستخدم ليلاً فقط 2-3 مرات أسبوعياً مع واقي شمس صباحاً.",
-        "warnings_ar": "لا يستخدم أثناء الحمل أو الإرضاع. يجب استخدام واقي شمس نهاراً.",
-        "claim_evidence_source": "تحذير الملصق الأصلي لشركة JUVELAB",
-        "batches": [],  # Unavailable SKU per Section 15 requirement
-    },
-    {
-        "sku": "JUVELAB-UV-FLUID-SPF50-50ML",
-        "brand": "juvelab",
-        "category": "moisturizers",
-        "name_ar": "سائل واقي شمس خفيف SPF 50+ للبشرة المختلطة",
-        "name_en": "JUVELAB Ultra-Light Fluid SPF 50+",
-        "pack_size_label_ar": "50 مل",
-        "volume_ml": 50,
-        "price_syp": 155000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 90,
-        "concern_tags": ["حماية من الشمس", "بشرة مختلطة"],
-        "ingredients_text": "Aqua, Diethylamino Hydroxybenzoyl Hexyl Benzoate, Ethylhexyl Triazone, Silica",
-        "directions_ar": "يرج جيداً ويطبق قبل التعرض للشمس بـ 15 دقيقة ويجدد كل ساعتين.",
-        "warnings_ar": "للاستعمال الخارجي فقط.",
-        "claim_evidence_source": "ملصق عبوة JUVELAB SPF50+ — تشرين الأول 2026",
-        "batches": [
-            {
-                "lot_code": "JUV-SPF-2606",
-                "supplier_invoice_ref": "INV-HOMS-2026-108",
-                "unit_cost_syp": 94000,
-                "expiry_date": date(2027, 10, 31),
-                "condition": "SALEABLE",
-                "qty_on_hand": 15,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع 10/2027",
-            }
-        ],
-    },
-    {
-        "sku": "FEME-SULFATEFREE-SHAMPOO-400ML",
-        "brand": "feme-hair",
-        "category": "hair-care",
-        "name_ar": "شامبو خالٍ من السلفات للشعر المعالج والمصبوغ",
-        "name_en": "FEME Hair Sulfate-Free Repair Shampoo",
-        "pack_size_label_ar": "400 مل",
-        "volume_ml": 400,
-        "price_syp": 125000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 60,
-        "concern_tags": ["عناية بالشعر", "خالٍ من السلفات"],
-        "ingredients_text": "Aqua, Sodium Lauroyl Methyl Isethionate, Cocamidopropyl Betaine, Hydrolyzed Keratin, Argania Spinosa Kernel Oil",
-        "directions_ar": "يوزع على شعر مبلل ويدلك بلطف ثم يشطف جيداً.",
-        "warnings_ar": "تجنب ملامسة العينين.",
-        "claim_evidence_source": "ملصق عبوة FEME Hair 400ml",
-        "batches": [
-            {
-                "lot_code": "FEM-SHM-2602",
-                "supplier_invoice_ref": "INV-HOMS-2026-109",
-                "unit_cost_syp": 75000,
-                "expiry_date": date(2027, 12, 31),
-                "condition": "SALEABLE",
-                "qty_on_hand": 14,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع 12/2027",
-            }
-        ],
-    },
-    {
-        "sku": "FEME-ROSEMARY-TONIC-100ML",
-        "brand": "feme-hair",
-        "category": "hair-care",
-        "name_ar": "تونيك إكليل الجبل والكافيين للعناية بفروة الرأس",
-        "name_en": "FEME Hair Rosemary & Caffeine Scalp Tonic",
-        "pack_size_label_ar": "100 مل",
-        "volume_ml": 100,
-        "price_syp": 140000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 60,
-        "concern_tags": ["عناية بفروة الرأس"],
-        "ingredients_text": "Aqua, Rosmarinus Officinalis Leaf Water, Caffeine, Biotin, Panthenol",
-        "directions_ar": "يرش مباشرة على فروة الرأس النظيفة ويدلك بأطراف الأصابع دون شطف.",
-        "warnings_ar": "للاستعمال الخارجي فقط.",
-        "claim_evidence_source": "ملصق عبوة FEME Hair 100ml",
-        "batches": [
-            {
-                "lot_code": "FEM-TON-2607",
-                "supplier_invoice_ref": "INV-HOMS-2026-110",
-                "unit_cost_syp": 84000,
-                "expiry_date": date(2027, 8, 31),
-                "condition": "SALEABLE",
-                "qty_on_hand": 5,
-                "validity_evidence_ref": "تاريخ انتهاء مطبوع 08/2027",
-            }
-        ],
-    },
-    {
-        "sku": "FEME-BIOTIN-MASK-250ML",
-        "brand": "feme-hair",
-        "category": "hair-care",
-        "name_ar": "ماسك البيوتين والكيراتين لتقوية الشعر (قيد فحص الصلاحية)",
-        "name_en": "FEME Hair Biotin & Keratin Intensive Mask",
-        "pack_size_label_ar": "250 غ",
-        "weight_g": 250,
-        "price_syp": 150000,
-        "pao_months": 12,
-        "min_remaining_validity_days": 60,
-        "concern_tags": ["ترطيب الشعر", "عناية بالشعر"],
-        "ingredients_text": "Aqua, Cetearyl Alcohol, Behentrimonium Chloride, Biotin, Hydrolyzed Keratin",
-        "directions_ar": "يوضع على أطراف الشعر الرطب لمدة 5-10 دقائق ثم يشطف بالماء.",
-        "warnings_ar": "للاستعمال الخارجي فقط.",
-        "claim_evidence_source": "ملصق عبوة FEME Hair 250g — رمز PAO 12M فقط دون تاريخ انتهاء واضح",
-        "batches": [
-            {
-                "lot_code": "FEM-MSK-2609-HOLD",
-                "supplier_invoice_ref": "INV-HOMS-2026-112",
-                "unit_cost_syp": 90000,
-                "expiry_date": None,  # Held for validity review! PAO symbol is NOT an unopened expiry date.
-                "condition": "QUARANTINE",
-                "qty_on_hand": 10,
-                "validity_evidence_ref": "محتجز للمراجعة: العبوة تحمل رمز 12M بعد الفتح فقط وبانتظار وثيقة الصلاحية من المورد",
-            }
-        ],
-    },
-]
 
+def demo_skus(today=None):
+    today = today or timezone.localdate()
+    result = []
+    for index, (sku, brand, category, name, size, price, cost, qty, lot) in enumerate(_DEMO_ROWS):
+        held = sku == "FEME-BIOTIN-MASK-250ML"
+        batches = []
+        if qty:
+            batches.append({
+                "lot_code": lot,
+                "supplier_invoice_ref": f"DEMO-INVOICE-{index + 1:02}",
+                "unit_cost_syp": cost,
+                "expiry_date": None if held else today + timedelta(days=180 + index * 20),
+                "condition": "QUARANTINE" if held else "SALEABLE",
+                "qty_on_hand": qty,
+                "validity_evidence_ref": "DEMO: synthetic validity data; no supplier evidence",
+            })
+        if index == 0:
+            batches.append({
+                "lot_code": "MED-B5-2608", "supplier_invoice_ref": "DEMO-INVOICE-SECOND-LOT",
+                "unit_cost_syp": 92000, "expiry_date": today + timedelta(days=400),
+                "condition": "SALEABLE", "qty_on_hand": 10,
+                "validity_evidence_ref": "DEMO: synthetic second lot",
+            })
+        result.append({
+            "sku": sku, "brand": brand, "category": category,
+            "name_ar": name, "name_en": f"Demo product {index + 1}",
+            "pack_size_label_ar": size, "price_syp": price,
+            "volume_ml": None if held else int(size.split()[0]),
+            "weight_g": 250 if held else None, "pao_months": 12,
+            "min_remaining_validity_days": 60,
+            "concern_tags": ["عناية بالشعر"] if category == "hair-care" else ["عناية بالبشرة"],
+            "ingredients_text": "Demo only — ingredients have not been verified.",
+            "directions_ar": "بيانات تجريبية؛ تُضاف تعليمات الملصق المعتمدة قبل البيع الفعلي.",
+            "warnings_ar": "هذا المنتج والبيانات المعروضة للتجربة فقط.",
+            "claim_evidence_source": "DEMO-NOT-VERIFIED", "batches": batches,
+        })
+    return result
+
+
+# Compatibility for tools that inspect the fixture module. Seeder calls the
+# function at execution time so its dates do not depend on process startup.
+SKUS = demo_skus()
 HOMS_DELIVERY_ZONES = [
-    {"city": "Homs", "code": "homs-al-waer", "district_name_ar": "حمص — الوعر", "district_name_en": "Homs - Al-Waer", "fee_syp": None, "is_active": False},
-    {"city": "Homs", "code": "homs-akrama", "district_name_ar": "حمص — عكرمة", "district_name_en": "Homs - Akrama", "fee_syp": None, "is_active": False},
-    {"city": "Homs", "code": "homs-al-inshaat", "district_name_ar": "حمص — الإنشاءات", "district_name_en": "Homs - Al-Inshaat", "fee_syp": None, "is_active": False},
-    {"city": "Homs", "code": "homs-al-hamidiyah", "district_name_ar": "حمص — الحميدية", "district_name_en": "Homs - Al-Hamidiyah", "fee_syp": None, "is_active": False},
-    {"city": "Homs", "code": "homs-al-ghouta", "district_name_ar": "حمص — الغوطة", "district_name_en": "Homs - Al-Ghouta", "fee_syp": None, "is_active": False},
+    {"city": "Homs", "code": code, "district_name_ar": ar, "district_name_en": en, "fee_syp": None, "is_active": False}
+    for code, ar, en in [
+        ("homs-al-waer", "الوعر", "Al-Waer"),
+        ("homs-akrama", "عكرمة", "Akrama"),
+        ("homs-al-inshaat", "الإنشاءات", "Al-Inshaat"),
+        ("homs-al-hamidiyah", "الحميدية", "Al-Hamidiyah"),
+        ("homs-al-ghouta", "الغوطة", "Al-Ghouta"),
+    ]
 ]
