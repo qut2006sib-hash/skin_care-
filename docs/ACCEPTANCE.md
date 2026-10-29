@@ -13,7 +13,9 @@ Candidate branch: `feat/complete-local-mvp`. Source repairs start from uploaded 
 | Production frontend build | PASS | Next.js 16.4.3 + React 19.3.1, locked dependencies; GitHub frontend job at the same commit. |
 | Real live browser flow | PASS | Chromium, actual Next.js + Django, disposable SQLite database; mobile purchase → confirm → dispatch → delivery/customer collection → courier remittance → return quarantine → inspection/restock → refund payment. Live private tracking updates correctly. No page errors. |
 | UI recovery browser scenarios | PASS | Intercepted API responses verify exact-key/body retry after lost response and reload, explicit changed-price approval, search, recent orders, offline cart, item removal and mobile overflow. This is UI behavior coverage rather than PostgreSQL acceptance. |
-| Docker packaging and CI browser jobs | PENDING final follow-up run | Added after the checks above, to validate the complete local packaging path. |
+| Docker packaging and CI browser jobs | PASS | GitHub run 40904793064 at implementation commit `8b7f351875c4c7513cd8d969f2b0638081671cae`: actual Docker build/start, proxied health/catalog, restart preservation, plus full live and mocked browser acceptance. |
+
+Complete application evidence: [all four jobs passed](https://github.com/qut2006sib-hash/skin_care-/actions/runs/40904793064).
 
 PostgreSQL evidence: [successful workflow](https://github.com/qut2006sib-hash/skin_care-/actions/runs/40903508998). The first workflow run found a test isolation issue: a dotenv-parser fixture expected its own password while CI intentionally provided a process password. The corrected fixture isolates that variable; application precedence was preserved. The subsequent full PostgreSQL run passed.
 

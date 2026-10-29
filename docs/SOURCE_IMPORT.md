@@ -11,4 +11,3 @@ The original archive's Git history is preserved in the original uploaded archive
 | `feat/pr4-concurrency-and-acceptance-tests` | `d308f19af2eec9c2615e3d9094dd96642228b2f1` | `dda967025430c18dd1e9b61a5630f7b2eee37c6d` |
 
 New implementation lives on `feat/complete-local-mvp`, based on the imported fourth feature snapshot. `main` remains the original architecture documentation baseline. The original feature branches remain reviewable and are not merged into main.
-
