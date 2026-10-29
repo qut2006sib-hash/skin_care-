@@ -13,6 +13,7 @@ with tempfile.TemporaryDirectory(prefix='skincare-browser-') as temp:
  env=dict(os.environ,DJANGO_SETTINGS_MODULE='config.test_settings',DIAGNOSTIC_DB=str(Path(temp)/'browser.sqlite3'),API_PROXY_TARGET='http://127.0.0.1:8000',LIVE_TEST_USERNAME='browser_owner',LIVE_TEST_PASSWORD=secrets.token_urlsafe(24),NEXT_TELEMETRY_DISABLED='1')
  run([sys.executable,'manage.py','migrate','--noinput'],ROOT/'backend',env)
  run([sys.executable,'manage.py','seed_section15','--demo'],ROOT/'backend',env)
+ run([sys.executable,'manage.py','import_pharmacy_catalog'],ROOT/'backend',env)
  run([sys.executable,'manage.py','shell','-c',"import os; from django.contrib.auth import get_user_model; get_user_model().objects.create_superuser(os.environ['LIVE_TEST_USERNAME'],'browser@example.invalid',os.environ['LIVE_TEST_PASSWORD'])"],ROOT/'backend',env)
  try:
   for argv,cwd in [([sys.executable,'manage.py','runserver','127.0.0.1:8000','--noreload'],ROOT/'backend'),(['npm','run','dev'],ROOT/'frontend')]:

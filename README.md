@@ -1,8 +1,10 @@
 # متجر العناية — Homs skincare local MVP
 
-Arabic-first mobile storefront and staff workspace for a single seller in Homs. Django/DRF + PostgreSQL 16 hold the operational records; Next.js serves the customer experience. This is a local pilot candidate, with explicit demo data and delivery disabled until configured.
+Arabic-first mobile storefront and staff workspace for a single seller in Homs. Django/DRF + PostgreSQL 16 hold the operational records; Next.js serves the customer experience. Setup includes the 18 products from `pharmacy-distribution` for browsing, with their original USD reference prices. Selling prices, stock and delivery stay unconfigured until entered by the operator.
 
 ## Run on Ubuntu
+
+For the downloadable application bundle, use `bash START.sh`; it checks Docker, loads the products, prompts for the first owner account and opens the store. Optionally run `bash install-desktop.sh` to add it to the Ubuntu applications menu. Arabic instructions: [QUICKSTART_AR.md](QUICKSTART_AR.md). `bash STOP.sh` stops the app without deleting data.
 
 Install Docker Engine with the Docker Compose plugin and Python 3. Keep this project in one folder; business data lives in Docker volumes, not the source tree.
 
@@ -13,7 +15,17 @@ docker compose exec backend python manage.py createsuperuser
 
 Open **http://localhost:3000** for customers, **http://localhost:3000/staff/** for operations, and **http://localhost:3000/admin/** for catalog/user setup. Use the owner account you created; no default password ships. The setup script generates secrets only when `.env` does not exist. It never resets a database or seeds stock on restart.
 
-For disposable demo data only:
+Setup imports the bundled supplier catalog automatically and safely on repeat runs. It preserves local catalog edits and stock. The imported products are reference listings: the source has no actual stock, verified pack sizes, label ingredients or SYP selling prices. They are searchable and browsable, and cannot be checked out. A published operational product with the same SKU replaces its reference listing after the operator enters reviewed product details, an actual SYP price and receives physical stock. Source prices are never silently converted into SYP.
+
+To load just the catalog on an existing installation:
+
+```bash
+docker compose exec backend python manage.py import_pharmacy_catalog
+```
+
+See [docs/PHARMACY_CATALOG.md](docs/PHARMACY_CATALOG.md) for the source snapshot, all 18 SKUs and activation steps.
+
+For disposable demo data only, enable `DEMO_MODE=1` in that disposable installation before using:
 
 ```bash
 docker compose exec backend python manage.py seed_section15 --demo

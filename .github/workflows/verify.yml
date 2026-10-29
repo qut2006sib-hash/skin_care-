@@ -76,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: bash scripts/local_setup.sh
-      - run: docker compose exec -T backend python manage.py seed_section15 --demo
+      - run: docker compose exec -T backend python manage.py import_pharmacy_catalog
       - name: Verify proxied health and catalog
         run: |
           python3 - <<'PY'
@@ -91,7 +91,10 @@ jobs:
                   time.sleep(1)
           with urllib.request.urlopen('http://localhost:3000/api/v1/catalog/products/') as r:
               data=json.load(r)
-          assert len(data['products'])==10 and data['demo_mode'] is True
+          assert len(data['products'])==18 and data['demo_mode'] is False
+          variants=[v for p in data['products'] for v in p['variants']]
+          assert all(v['price_syp'] is None and not v['orderable'] and v['available_quantity']==0 for v in variants)
+          assert all(v['reference_price']['currency']=='USD' for v in variants)
           PY
       - run: docker compose restart backend worker
       - name: Verify restart retained catalog and disabled zones
@@ -101,7 +104,7 @@ jobs:
           for attempt in range(30):
               try:
                   with urllib.request.urlopen('http://localhost:3000/api/v1/catalog/products/',timeout=4) as r:
-                      assert len(json.load(r)['products'])==10
+                      assert len(json.load(r)['products'])==18
                   break
               except Exception:
                   if attempt==29: raise

@@ -384,3 +384,35 @@ class RefundPayment(models.Model):
 
     class Meta:
         constraints = [models.CheckConstraint(condition=Q(amount_syp__gt=0), name="refund_payment_positive")]
+
+
+class SupplierCatalogItem(models.Model):
+    """A source listing, never an inventory/checkout authority.
+
+    USD prices are the supplier's reference values. Final local prices, pack
+    sizes, approved labels and physical stock must be entered independently.
+    """
+    sku = models.CharField(max_length=64, unique=True)
+    source_name = models.CharField(max_length=240)
+    name_ar = models.CharField(max_length=240)
+    brand_name = models.CharField(max_length=120)
+    brand_name_ar = models.CharField(max_length=120)
+    brand_slug = models.SlugField(max_length=64)
+    category_slug = models.SlugField(max_length=64)
+    category_name_ar = models.CharField(max_length=120)
+    reference_price_usd = models.DecimalField(max_digits=12, decimal_places=2)
+    source_repository = models.CharField(max_length=200)
+    source_commit = models.CharField(max_length=40)
+    source_path = models.CharField(max_length=500)
+    is_visible = models.BooleanField(default=True)
+    imported_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
+        constraints = [models.CheckConstraint(condition=Q(reference_price_usd__gte=0), name='supplier_reference_price_nonnegative')]
+        verbose_name = 'منتج من كتالوج الموزع'
+        verbose_name_plural = 'كتالوج الموزع المرجعي'
+
+    def __str__(self):
+        return f'{self.sku} — {self.source_name}'

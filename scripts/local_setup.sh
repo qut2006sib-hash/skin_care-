@@ -11,7 +11,9 @@ fd=os.open('.env',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
 with os.fdopen(fd,'w') as f: f.write(s)
 PY
 fi
-docker compose up --build -d
+docker compose up --build -d --wait --wait-timeout 180
+docker compose exec -T backend python manage.py import_pharmacy_catalog
 printf '\nOpen http://localhost:3000\nCreate your owner account: docker compose exec backend python manage.py createsuperuser\n'
 printf 'Optional demo catalog: docker compose exec backend python manage.py seed_section15 --demo\n'
 printf 'Delivery fees stay disabled until you configure actual fees in /admin/.\n'
+printf '18 pharmacy-distribution products are loaded for browsing with original USD reference prices. No selling prices or stock are invented.\n'

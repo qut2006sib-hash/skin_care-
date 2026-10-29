@@ -1,6 +1,6 @@
 # Operating the Homs skincare pilot
 
-This application starts with an empty business database. A normal start or restart must never load sample stock or reset delivery fees. Run migrations and initialize role permissions as part of setup; create a staff account using Django's interactive `createsuperuser` command. There is no shipped default password.
+This application starts with an empty operational database and imports 18 supplier catalog reference listings during local setup. A normal start or restart must never load sample stock or reset delivery fees. The imported USD prices remain reference metadata; they are not SYP selling prices and create no stock, orders or cash events. Read [PHARMACY_CATALOG.md](PHARMACY_CATALOG.md) to prepare a source SKU for actual selling. Run migrations and initialize role permissions as part of setup; create a staff account using Django's interactive `createsuperuser` command. There is no shipped default password.
 
 ## Explicit disposable demo initialization
 

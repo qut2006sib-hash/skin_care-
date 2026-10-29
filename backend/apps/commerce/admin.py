@@ -81,3 +81,21 @@ class OrderAdmin(OperationalAdmin):
 
 for model in (OrderBatchAllocation,CustomerCashCollection,CourierRemittance,ReturnRecord,AuditLog,StockReceipt,StockMovement,RefundPayment):
     admin.site.register(model,OperationalAdmin)
+
+
+# Source listings are reference-only: hiding a listing never changes stock.
+from .models import SupplierCatalogItem
+
+@admin.register(SupplierCatalogItem)
+class SupplierCatalogItemAdmin(admin.ModelAdmin):
+    list_display = ('sku', 'source_name', 'brand_name', 'reference_price_usd', 'is_visible')
+    list_filter = ('brand_name', 'category_slug', 'is_visible')
+    search_fields = ('sku', 'source_name', 'name_ar')
+    list_editable = ('is_visible',)
+    readonly_fields = ('sku', 'source_name', 'name_ar', 'brand_name', 'brand_name_ar', 'brand_slug', 'category_slug', 'category_name_ar', 'reference_price_usd', 'source_repository', 'source_commit', 'source_path', 'imported_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
