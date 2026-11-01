@@ -31,6 +31,7 @@ with tempfile.TemporaryDirectory(prefix='skincare-browser-') as temp:
   print('Both servers ready; starting live browser flow.',flush=True)
   run([sys.executable,'-u',str(ROOT/'tests/browser_live_mvp.py')],ROOT,env)
   run([sys.executable,'-u',str(ROOT/'tests/browser_mvp.py'),'--base-url','http://127.0.0.1:3000'],ROOT,env)
+  run([sys.executable,'-u',str(ROOT/'tests/browser_accounts.py'),'--base-url','http://127.0.0.1:3000'],ROOT,env)
  except Exception:
   for log in logs:
    log.flush();log.seek(0);print(log.read()[-9000:],file=sys.stderr,flush=True)

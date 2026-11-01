@@ -18,7 +18,7 @@ if ! docker info >/dev/null 2>&1; then
 fi
 
 bash scripts/local_setup.sh
-has_owner=$(docker compose exec -T backend python manage.py shell -c 'from django.contrib.auth import get_user_model; print("OWNER_EXISTS" if get_user_model().objects.filter(is_superuser=True,is_active=True).exists() else "OWNER_MISSING")')
+has_owner=$(docker compose exec -T backend python manage.py shell -c 'from django.contrib.auth import get_user_model; from django.db.models import Q; print("OWNER_EXISTS" if get_user_model().objects.filter(is_staff=True,is_active=True).filter(Q(is_superuser=True)|Q(groups__name="Owner")).exists() else "OWNER_MISSING")')
 if [[ "$has_owner" != *OWNER_EXISTS* ]]; then
   if [[ -t 0 && -t 1 ]]; then
     printf '\nCreate your private owner account now. No default password is included.\n'

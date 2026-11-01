@@ -34,7 +34,7 @@ with sync_playwright() as p:
  expect(office.get_by_role('status')).to_contain_text('حفظت إعدادات التوصيل')
  customer=browser.new_context(viewport={'width':390,'height':844},service_workers='block')
  page=customer.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
- page.goto(base)
+ page.goto(base+'/shop')
  expect(page.get_by_role('heading',name='تصفّح العناية')).to_be_visible()
  add=page.get_by_role('button',name='أضف سيروم تجريبي إلى السلة',exact=True)
  expect(add).to_be_visible()
