@@ -13,6 +13,8 @@ from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from apps.accounts.access import account_type, session_details, CustomerCheckoutAuthentication
 from .models import Product, ProductVariant, DeliveryZone, Order, InventoryBatch, CourierRemittance, ReturnRecord, AuditLog
 from .serializers import (PublicProductSerializer, PublicDeliveryZoneSerializer, ProtectedOrderTrackingSerializer, CheckoutSerializer, ReceiveBatchSerializer, ReasonSerializer, DispatchSerializer, CollectionSerializer, RemittanceSerializer, ReturnReceiptSerializer, ReturnInspectionSerializer, ZoneUpdateSerializer, LoginSerializer, StaffBatchSerializer, StaffReturnSerializer, StaffRemittanceSerializer, RefundPaymentCommandSerializer, StaffRefundPaymentSerializer, ReviewBatchSerializer)
 from .services import InventoryOrderService
@@ -54,7 +56,7 @@ def private(response):
 def user_data(user):
     if not user.is_authenticated:
         return {'authenticated': False}
-    return {'authenticated': True, 'username': user.username, 'roles': list(user.groups.values_list('name', flat=True)), 'is_owner': has_role(user, ('Owner',)), 'can_catalog': has_role(user, ('Owner','Catalog_Inventory_Manager')), 'can_fulfill': has_role(user, ('Owner','Fulfillment_Support_Staff')), 'is_staff': has_role(user)}
+    return {'authenticated': True, 'username': user.username, 'roles': list(user.groups.values_list('name', flat=True)), 'is_owner': has_role(user, ('Owner',)), 'can_catalog': has_role(user, ('Owner','Catalog_Inventory_Manager')), 'can_fulfill': has_role(user, ('Owner','Fulfillment_Support_Staff')), 'is_staff': has_role(user), **session_details(user)}
 
 
 @api_view(['GET'])
@@ -88,14 +90,14 @@ def login_view(request):
     if not serializer.is_valid():
         return JsonResponse({'detail':'أدخل اسم المستخدم وكلمة المرور.', 'errors':serializer.errors}, status=400)
     user = authenticate(request, **serializer.validated_data)
-    if user is None or not has_role(user):
+    if user is None or account_type(user) is None or (raw.get('account_type') and raw['account_type'] != account_type(user)):
         return JsonResponse({'detail':'بيانات الدخول غير صحيحة أو الحساب غير مصرح له.'}, status=403)
     login(request, user)
     return JsonResponse(user_data(user))
 
 
 @api_view(['POST'])
-@permission_classes([IsCommerceStaff])
+@permission_classes([IsAuthenticated])
 def logout_view(request):
     logout(request)
     return private(Response({'authenticated':False}))
@@ -123,14 +125,15 @@ def active_delivery_zones_view(request):
 
 
 @api_view(['POST'])
-@authentication_classes([])
+@authentication_classes([CustomerCheckoutAuthentication])
 @command_errors
 def guest_checkout_submit_view(request):
     key = request.headers.get('Idempotency-Key') or request.data.get('idempotency_key')
     if not isinstance(key,str) or not key.strip() or len(key)>128:
         return Response({'detail':'معرّف محاولة الطلب مطلوب ويجب ألا يتجاوز 128 حرفاً.'},status=400)
     data = validated(CheckoutSerializer,request)
-    order = InventoryOrderService.submit_guest_cod_order(idempotency_key=key,**data)
+    customer = request.user if account_type(request.user) == 'customer' else None
+    order = InventoryOrderService.submit_guest_cod_order(idempotency_key=key, customer_user=customer, **data)
     return private(Response({'order_number':order.order_number,'tracking_token':order.tracking_token,'status':order.status,'total_syp':order.total_syp,'currency':order.currency,'hold_expires_at':order.hold_expires_at},status=201))
 
 

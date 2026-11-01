@@ -1,4 +1,5 @@
 import secrets
+from django.conf import settings
 from django.db import models
 from django.db.models import Q, F
 from django.utils import timezone
@@ -164,6 +165,7 @@ def generate_tracking_token() -> str:
 
 
 class Order(models.Model):
+    customer_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name='online_orders')
     order_number = models.CharField(max_length=32, unique=True)
     tracking_token = models.CharField(max_length=64, unique=True, default=generate_tracking_token)
     idempotency_key = models.CharField(max_length=128, unique=True)

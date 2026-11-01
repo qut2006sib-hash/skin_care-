@@ -179,7 +179,7 @@ class InventoryOrderService:
 
     @classmethod
     @transaction.atomic
-    def submit_guest_cod_order(cls, *, idempotency_key, customer_name, customer_phone, delivery_zone_code, address_landmark_ar, items, now=None, hold_hours=None, replaced_order=None, expected_total_syp=None):
+    def submit_guest_cod_order(cls, *, idempotency_key, customer_name, customer_phone, delivery_zone_code, address_landmark_ar, items, now=None, hold_hours=None, replaced_order=None, expected_total_syp=None, customer_user=None):
         now = now or timezone.now()
         key = _text(idempotency_key, "مفتاح الطلب", 128)
         customer_name = _text(customer_name, "الاسم", 160)
@@ -201,6 +201,8 @@ class InventoryOrderService:
         hold_hours = settings.COD_UNCONFIRMED_HOLD_HOURS if hold_hours is None else hold_hours
         _integer(hold_hours, "مهلة الحجز", 1)
         fingerprint = _fingerprint(dict(name=customer_name, phone=customer_phone, zone=delivery_zone_code, address=address_landmark_ar, items=sorted(quantities.items()), expected_total_syp=expected_total_syp, replacement=replaced_order.pk if replaced_order else None))
+        if customer_user is not None:
+            fingerprint = _fingerprint({'request': fingerprint, 'customer_user_id': customer_user.pk})
         _retry_lock("checkout", key)
         existing = Order.objects.filter(idempotency_key=key).first()
         if existing:
@@ -241,6 +243,9 @@ class InventoryOrderService:
                     break
             plan.append((variant, allocations))
         order = Order.objects.create(order_number=f"HOMS-{now.strftime('%Y%m%d')}-{secrets.token_hex(6).upper()}", tracking_token=generate_tracking_token(), idempotency_key=key, request_fingerprint=fingerprint, status=OrderStatus.PENDING_CONFIRMATION, customer_name=customer_name, customer_phone=customer_phone, delivery_zone=zone, district_snapshot_ar=zone.district_name_ar, address_landmark_ar=address_landmark_ar, subtotal_syp=subtotal, delivery_fee_syp=zone.fee_syp, total_syp=total, created_at=now, hold_expires_at=now+timedelta(hours=hold_hours), replaced_order=replaced_order)
+        if customer_user is not None:
+            order.customer_user = customer_user
+            order.save(update_fields=['customer_user'])
         for variant, allocations in plan:
             quantity = quantities[variant.sku]
             line = OrderLine.objects.create(order=order, variant=variant, sku_snapshot=variant.sku, product_name_ar_snapshot=variant.product.name_ar, pack_size_ar_snapshot=variant.pack_size_label_ar, unit_price_syp_snapshot=variant.price_syp, quantity=quantity, line_total_syp_snapshot=variant.price_syp*quantity)
@@ -305,7 +310,7 @@ class InventoryOrderService:
         order = Order.objects.select_for_update().get(pk=expired_order_id)
         if order.status != OrderStatus.EXPIRED:
             raise InvalidStateTransitionError("الطلب الأصلي يجب أن يكون منتهياً.")
-        return cls.submit_guest_cod_order(idempotency_key=idempotency_key, customer_name=order.customer_name, customer_phone=order.customer_phone, delivery_zone_code=order.delivery_zone.code, address_landmark_ar=order.address_landmark_ar, items=[dict(sku=l.sku_snapshot, quantity=l.quantity) for l in order.lines.all()], now=now, replaced_order=order, expected_total_syp=expected_total_syp)
+        return cls.submit_guest_cod_order(idempotency_key=idempotency_key, customer_name=order.customer_name, customer_phone=order.customer_phone, delivery_zone_code=order.delivery_zone.code, address_landmark_ar=order.address_landmark_ar, items=[dict(sku=l.sku_snapshot, quantity=l.quantity) for l in order.lines.all()], now=now, replaced_order=order, expected_total_syp=expected_total_syp, customer_user=order.customer_user)
 
     @classmethod
     @transaction.atomic

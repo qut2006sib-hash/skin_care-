@@ -1,8 +1,18 @@
 from django.contrib import admin
 from django.urls import path
 from apps.commerce import views
+from apps.accounts import views as accounts
 
 urlpatterns = [
+    path('api/v1/auth/register/', accounts.register_view),
+    path('api/v1/customer/orders/', accounts.customer_orders_view),
+    path('api/v1/manager/stores/', accounts.manager_stores_view),
+    path('api/v1/manager/stores/<int:store_id>/status/', accounts.manager_store_status_view),
+    path('api/v1/store/dashboard/', accounts.store_dashboard_view),
+    path('api/v1/store/products/', accounts.store_products_view),
+    path('api/v1/store/receipts/', accounts.store_receipts_view),
+    path('api/v1/store/sales/', accounts.store_sales_view),
+    path('api/v1/store/sales/<int:sale_id>/return/', accounts.store_return_view),
     path('admin/',admin.site.urls),
     path('staff/',views.staff_home_view,name='staff-home'),
     path('staff/orders/<int:order_id>/picklist/',views.staff_picklist_view,name='staff-picklist'),

@@ -1,5 +1,13 @@
 # متجر العناية — Homs skincare local MVP
 
+## Three account types (0.4.0)
+
+The entry page now offers Manager, Store/Pharmacy and Customer accounts. Existing owners sign in at `/sign-in?type=manager` and open `/manager`; pharmacy registration needs manager approval and opens its isolated `/store` workspace. Customers can register, shop at `/shop`, and see their own account-linked orders at `/account`. Existing staff permissions, guest checkout and private tracking links remain supported.
+
+All online customer orders reserve and ship from the central warehouse. Pharmacy receipt/POS stock is a separate ledger per pharmacy and never contributes to online availability. Pharmacy counter sales include FEFO, frozen cost snapshots, paid-in-full cash receipts, low-stock/profit summaries, printing, idempotent retries and full refunds into quarantine. No source prices are silently converted into selling prices.
+
+See [docs/ACCOUNTS_AR.md](docs/ACCOUNTS_AR.md) for permissions, workflows, limitations and populated-installation upgrade instructions. For an existing installation, extract separately and use `python3 scripts/upgrade_from.py /absolute/path/to/old/skin_care` before first startup; it verifies a backup and reuses the private configuration and Compose identity instead of generating conflicting database credentials.
+
 Arabic-first mobile storefront and staff workspace for a single seller in Homs. Django/DRF + PostgreSQL 16 hold the operational records; Next.js serves the customer experience. Setup includes the 18 products from `pharmacy-distribution` for browsing, with their original USD reference prices. Selling prices, stock and delivery stay unconfigured until entered by the operator.
 
 ## Run on Ubuntu

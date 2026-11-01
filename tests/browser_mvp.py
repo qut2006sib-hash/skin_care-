@@ -59,7 +59,7 @@ with sync_playwright() as p:
   page.get_by_role('button',name='أضف سيروم الترطيب التجريبي إلى السلة',exact=True).click()
   page.get_by_role('button',name='السلة',exact=False).first.click()
   expect(page.get_by_role('dialog')).to_be_visible()
- page.goto(BASE)
+ page.goto(BASE+'/shop')
  expect(page.get_by_role('heading',name='تصفّح العناية')).to_be_visible()
  expect(page.get_by_role('button',name='أضف سيروم الترطيب التجريبي إلى السلة',exact=True)).to_be_visible()
  assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'mobile overflow'
@@ -124,7 +124,7 @@ with sync_playwright() as p:
  page.goto(BASE+'/orders')
  expect(page.get_by_role('link',name='تتبّع الطلب',exact=True)).to_be_visible()
  # A confirmed price conflict must refresh the displayed price and require another click.
- page.goto(BASE)
+ page.goto(BASE+'/shop')
  state.update(mode='price',posts=[],price=145000)
  page.reload()
  add_and_open();fill_checkout()
@@ -139,7 +139,7 @@ with sync_playwright() as p:
  assert state['posts'][0]['key']!=state['posts'][1]['key']
  # Offline cart remains locally saved and cannot submit.
  state.update(mode='normal',posts=[])
- page.goto(BASE)
+ page.goto(BASE+'/shop')
  add_and_open();fill_checkout()
  context.set_offline(True)
  expect(page.get_by_role('button',name='تأكيد الطلب والدفع عند الاستلام',exact=True)).to_be_disabled()
