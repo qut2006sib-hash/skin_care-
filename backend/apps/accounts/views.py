@@ -1,4 +1,5 @@
 import json
+from functools import wraps
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.validators import UnicodeUsernameValidator
@@ -21,6 +22,15 @@ from apps.commerce.services import _audit
 from .access import IsCustomer, IsStore, IsApprovedStore
 from .models import AccountProfile, Store, StoreProduct, StoreBatch, StoreSale
 from .services import save_product, receive_stock, make_sale, return_sale
+
+
+def object_body(fn):
+    @wraps(fn)
+    def wrapped(request, *args, **kwargs):
+        if not isinstance(request.data, dict):
+            return Response({'detail': 'أرسل الحقول ضمن كائن JSON صالح.'}, status=400)
+        return fn(request, *args, **kwargs)
+    return wrapped
 
 
 class RegistrationSerializer(serializers.Serializer):
@@ -82,6 +92,7 @@ def manager_stores_view(request):
 
 @api_view(['POST'])
 @permission_classes([IsOwnerStaff])
+@object_body
 def manager_store_status_view(request, store_id):
     status = request.data.get('status')
     if status not in ('PENDING', 'APPROVED', 'SUSPENDED'):
@@ -134,6 +145,7 @@ def store_dashboard_view(request):
 
 @api_view(['POST'])
 @permission_classes([IsApprovedStore])
+@object_body
 @command_errors
 def store_products_view(request):
     product = save_product(store_id=Store.objects.get(owner=request.user).pk, sku=request.data.get('sku'), name=request.data.get('name'), selling_price_syp=request.data.get('selling_price_syp'), low_stock_threshold=request.data.get('low_stock_threshold', 5), actor=request.user.username)
@@ -142,6 +154,7 @@ def store_products_view(request):
 
 @api_view(['POST'])
 @permission_classes([IsApprovedStore])
+@object_body
 @command_errors
 def store_receipts_view(request):
     receipt = receive_stock(store_id=Store.objects.get(owner=request.user).pk, reference=request.data.get('reference'), items=request.data.get('items'), actor=request.user.username)
@@ -150,6 +163,7 @@ def store_receipts_view(request):
 
 @api_view(['POST'])
 @permission_classes([IsApprovedStore])
+@object_body
 @command_errors
 def store_sales_view(request):
     sale = make_sale(store_id=Store.objects.get(owner=request.user).pk, reference=request.data.get('reference'), items=request.data.get('items'), actor=request.user.username, expected_total_syp=request.data.get('expected_total_syp'))
@@ -158,6 +172,7 @@ def store_sales_view(request):
 
 @api_view(['POST'])
 @permission_classes([IsApprovedStore])
+@object_body
 @command_errors
 def store_return_view(request, sale_id):
     sale = return_sale(store_id=Store.objects.get(owner=request.user).pk, sale_id=sale_id, reason=request.data.get('reason'), actor=request.user.username)

@@ -409,3 +409,20 @@ def test_pos_expected_total_guard_and_retry_preserve_frozen_receipt(pharmacies):
     assert post(client,'store/sales/',{**payload,'reference':'NEW-SALE-OLD-PRICE'}).status_code == 409
     assert StoreSale.objects.count() == 1 and StoreBatch.objects.get(product=product).quantity == 3
     assert post(client,'store/sales/',{**payload,'expected_total_syp':1998}).status_code == 409
+
+
+@pytest.mark.parametrize('body', [['not-an-object'], 'not-an-object', 7, True])
+@pytest.mark.parametrize('endpoint', ['manager-status','store/products/','store/receipts/','store/sales/','store-return'])
+def test_mutation_endpoints_reject_non_object_json_without_server_error(manager,pharmacies,body,endpoint):
+    first,_ = pharmacies
+    if endpoint == 'manager-status':
+        client = client_for(manager)
+        path = f'manager/stores/{first.pk}/status/'
+    else:
+        client = client_for(first.owner)
+        path = 'store/sales/999999/return/' if endpoint == 'store-return' else endpoint
+    response = post(client,path,body)
+    assert response.status_code == 400, getattr(response,'data',response.content)
+    first.refresh_from_db()
+    assert first.status == 'APPROVED'
+    assert not StoreProduct.objects.exists() and not StoreReceipt.objects.exists() and not StoreSale.objects.exists()
